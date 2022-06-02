@@ -47,7 +47,7 @@ describe('AddMachineNetworkComponent', () => {
     }).compileComponents();
   }));
 
-  /* This is a test 5 === */
+  /* This is a test 6 === */
   beforeEach(() => {
     fixture = TestBed.createComponent(AddMachineNetworkComponent);
     component = fixture.componentInstance;
