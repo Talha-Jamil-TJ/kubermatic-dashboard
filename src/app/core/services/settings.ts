@@ -14,14 +14,18 @@
 
 import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
+
+import {catchError, delay, map, retryWhen, shareReplay, switchMap} from 'rxjs/operators';
+import {BehaviorSubject, EMPTY, iif, merge, Observable, of, Subject, timer} from 'rxjs';
+import {webSocket} from 'rxjs/webSocket';
+
+import {AdminSettings, CustomLink, DEFAULT_ADMIN_SETTINGS} from '@shared/entity/settings';
+import {Admin, Member} from '@shared/entity/member';
+import {Quota} from '@shared/entity/quota';
+
+import {environment} from '@environments/environment';
 import {AppConfigService} from '@app/config.service';
 import {Auth} from '@core/services/auth/service';
-import {environment} from '@environments/environment';
-import {Admin, Member} from '@shared/entity/member';
-import {AdminSettings, CustomLink, DEFAULT_ADMIN_SETTINGS} from '@shared/entity/settings';
-import {BehaviorSubject, EMPTY, iif, merge, Observable, of, Subject, timer} from 'rxjs';
-import {catchError, delay, map, retryWhen, shareReplay, switchMap} from 'rxjs/operators';
-import {webSocket} from 'rxjs/webSocket';
 
 @Injectable({
   providedIn: 'root',
@@ -35,7 +39,9 @@ export class SettingsService {
   private readonly _retryTime = 3;
   private _adminSettingsWatch$: Observable<AdminSettings>;
   private _admins$: Observable<Admin[]>;
+  private _quotas$: Observable<Quota[]>;
   private _adminsRefresh$ = new Subject<void>();
+  private _quotasRefresh$ = new Subject<void>();
   private _users$: Observable<Member[]>;
   private _usersRefresh$ = new Subject<void>();
   private _customLinks$: Observable<CustomLink[]>;
@@ -147,5 +153,24 @@ export class SettingsService {
 
   refreshUsers(): void {
     this._usersRefresh$.next();
+  }
+
+  get quotas(): Observable<Quota[]> {
+    if (this._quotas$) {
+      return this._quotas$;
+    }
+
+    return (this._quotas$ = merge(this._refreshTimer$, this._quotasRefresh$)
+      .pipe(switchMap(() => this._getQuotas()))
+      .pipe(shareReplay({refCount: true, bufferSize: 1})));
+  }
+
+  private _getQuotas(): Observable<Quota[]> {
+    const url = `${this._newRestRoot}/quotas`;
+    return this._httpClient.get<Quota[]>(url).pipe(catchError(() => of([])));
+  }
+
+  refreshQuotas(): void {
+    this._quotasRefresh$.next();
   }
 }
