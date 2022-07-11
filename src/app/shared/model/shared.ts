@@ -12,26 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-type stringOrNumber = string | number;
+import {FormGroup, FormControl} from '@angular/forms';
 
-export interface QuotaVariables<T extends stringOrNumber = string> {
-  cpu?: T;
-  memory?: T;
-  storage?: T;
-}
-
-export interface Status {
-  globalUsage: QuotaVariables | Record<string, never>;
-  localUsage: QuotaVariables | Record<string, never>;
-}
-
-export interface Quota<T extends stringOrNumber = string> {
-  quota: QuotaVariables<T>;
-  subjectKind: string;
-  subjectName: string;
-}
-
-export type QuotaDetails = Quota & {
-  name: string;
-  status: Status;
+export type ControlsOf<T extends Record<string, any>> = {
+  [K in keyof T]: T[K] extends Record<string, any> ? FormGroup<ControlsOf<T[K]>> : FormControl<T[K]>;
 };

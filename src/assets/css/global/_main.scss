@@ -534,6 +534,12 @@ km-dashboard {
       }
     }
   }
+
+  &.km-quota-dialog {
+    .mat-form-field {
+      min-width: 135px;
+    }
+  }
 }
 
 .km-radio-group {

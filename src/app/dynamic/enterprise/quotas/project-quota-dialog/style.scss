@@ -1,4 +1,4 @@
-// Copyright 2022 The Kubermatic Kubernetes Platform contributors.
+// Copyright 2020 The Kubermatic Kubernetes Platform contributors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,26 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-type stringOrNumber = string | number;
-
-export interface QuotaVariables<T extends stringOrNumber = string> {
-  cpu?: T;
-  memory?: T;
-  storage?: T;
+.quota-form {
+  margin-bottom: 20px;
 }
 
-export interface Status {
-  globalUsage: QuotaVariables | Record<string, never>;
-  localUsage: QuotaVariables | Record<string, never>;
-}
+.quotas-error {
+  font-size: 75%;
 
-export interface Quota<T extends stringOrNumber = string> {
-  quota: QuotaVariables<T>;
-  subjectKind: string;
-  subjectName: string;
+  &.hidden {
+    visibility: hidden;
+  }
 }
-
-export type QuotaDetails = Quota & {
-  name: string;
-  status: Status;
-};

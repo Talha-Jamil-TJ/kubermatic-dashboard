@@ -1,0 +1,102 @@
+<!--
+               Kubermatic Enterprise Read-Only License
+                      Version 1.0 ("KERO-1.0”)
+                  Copyright © 2022 Kubermatic GmbH
+
+1. You may only view, read and display for studying purposes the source
+   code of the software licensed under this license, and, to the extent
+   explicitly provided under this license, the binary code.
+2. Any use of the software which exceeds the foregoing right, including,
+   without limitation, its execution, compilation, copying, modification
+   and distribution, is expressly prohibited.
+3. THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND,
+   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+   IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+END OF TERMS AND CONDITIONS
+-->
+
+<km-dialog-title>Add Project Quota</km-dialog-title>
+<mat-dialog-content>
+  <form [formGroup]="form"
+        fxLayout="column"
+        fxLayoutAlign="space-between stretch">
+    <form [formGroup]="quotaGroup"
+          class="quota-form"
+          fxLayout="column"
+          fxLayoutAlign="space-between center"
+          fxLayoutGap="5px">
+      <div class="quota-inputs"
+           fxLayout="row"
+           fxLayoutGap="5px"
+           fxLayoutAlign="space-between center">
+        <km-number-stepper class="km-stepper"
+                           label="CPU"
+                           min="0"
+                           [formControl]="quotaGroup.controls.cpu"
+                           [required]="quotaGroup.hasError(Error.AtLeastOneRequired)">
+        </km-number-stepper>
+        <km-number-stepper class="km-stepper"
+                           label="RAM"
+                           min="0"
+                           [formControl]="quotaGroup.controls.memory"
+                           [required]="quotaGroup.hasError(Error.AtLeastOneRequired)">
+        </km-number-stepper>
+        <km-number-stepper class="km-stepper"
+                           label="DISK"
+                           min="0"
+                           [formControl]="quotaGroup.controls.storage"
+                           [required]="quotaGroup.hasError(Error.AtLeastOneRequired)">
+        </km-number-stepper>
+      </div>
+
+      <mat-error class="quotas-error"
+                 [class.hidden]="!quotaGroup.hasError(Error.AtLeastOneRequired) || !quotaGroup.touched">
+        At least one limit (CPU, RAM or DISK) is <strong>required</strong>
+      </mat-error>
+    </form>
+
+    <div fxLayout="column"
+         fxLayoutAlign=" stretch">
+      <mat-form-field class="km-dropdown-with-suffix">
+        <mat-label>Project</mat-label>
+        <mat-select disableOptionCentering
+                    class="km-select-ellipsis"
+                    [formControl]="form.controls.subjectName"
+                    required>
+          <mat-option *ngFor="let project of projects"
+                      [value]="project.id"> {{project.id}} </mat-option>
+          <mat-select-trigger fxFlex
+                              fxLayout="row">
+            <div fxFlex
+                 fxLayoutAlign="start">{{form.controls.subjectName.value}}</div>
+
+            <div fxFlex
+                 fxLayoutAlign="end"
+                 class="km-select-trigger-button-wrapper">
+              <button matSuffix
+                      mat-icon-button
+                      aria-label="Clear"
+                      (click)="form.controls.subjectName.reset()">
+                <i class="km-icon-mask km-icon-remove"></i>
+              </button>
+            </div>
+          </mat-select-trigger>
+        </mat-select>
+        <mat-error> Project is <strong>required</strong> </mat-error>
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <km-button id="km-add-quota-dialog-save-btn"
+             icon="km-icon-add"
+             label="{{ selectedQuota ? 'Update' : 'Add' }} Project Quota"
+             [disabled]="form.invalid"
+             [observable]="getObservable()">
+  </km-button>
+</mat-dialog-actions>

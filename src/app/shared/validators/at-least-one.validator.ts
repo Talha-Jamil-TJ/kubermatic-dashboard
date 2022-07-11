@@ -12,26 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-type stringOrNumber = string | number;
+import {Validator, ValidationErrors, FormGroup} from '@angular/forms';
 
-export interface QuotaVariables<T extends stringOrNumber = string> {
-  cpu?: T;
-  memory?: T;
-  storage?: T;
+export class AtLeastOneValidator implements Validator {
+  validate({controls}: FormGroup): ValidationErrors | null {
+    if (!controls) {
+      return null;
+    }
+
+    const hasValue = !!Object.values(controls).some(({value}) => !!value);
+
+    return hasValue ? null : this._error;
+  }
+
+  private get _error(): ValidationErrors {
+    return {
+      atLeastOneRequired: {
+        text: 'At least one value is required',
+      },
+    };
+  }
 }
-
-export interface Status {
-  globalUsage: QuotaVariables | Record<string, never>;
-  localUsage: QuotaVariables | Record<string, never>;
-}
-
-export interface Quota<T extends stringOrNumber = string> {
-  quota: QuotaVariables<T>;
-  subjectKind: string;
-  subjectName: string;
-}
-
-export type QuotaDetails = Quota & {
-  name: string;
-  status: Status;
-};

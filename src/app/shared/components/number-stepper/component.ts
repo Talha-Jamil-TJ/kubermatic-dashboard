@@ -34,6 +34,7 @@ import {
   Validator,
 } from '@angular/forms';
 import {noop, Subject} from 'rxjs';
+import {takeUntil} from 'rxjs/operators';
 
 enum Error {
   Required = 'required',
@@ -64,6 +65,7 @@ export class NumberStepperComponent implements AfterViewInit, OnDestroy, Control
   private readonly _unsubscribe = new Subject<void>();
   private readonly _integerPattern = /^[-]?[0-9]*$/;
   @ViewChild('input') private readonly _model: NgModel;
+  onTouch: () => unknown = noop;
   private _onChange: (_: number | string) => void = noop;
   private _valid = false;
   @Input() label: string;
@@ -141,7 +143,7 @@ export class NumberStepperComponent implements AfterViewInit, OnDestroy, Control
   constructor(private readonly _decimalPipe: DecimalPipe, private readonly _cdr: ChangeDetectorRef) {}
 
   ngAfterViewInit(): void {
-    this._model.statusChanges.subscribe(status => {
+    this._model.statusChanges.pipe(takeUntil(this._unsubscribe)).subscribe(status => {
       this._valid = status === 'VALID';
       this._onChange(this.value);
     });
@@ -160,7 +162,9 @@ export class NumberStepperComponent implements AfterViewInit, OnDestroy, Control
     this._onChange = fn;
   }
 
-  registerOnTouched(_fn: () => void): void {}
+  registerOnTouched(fn: () => unknown): void {
+    this.onTouch = fn;
+  }
 
   validate(_?: AbstractControl): ValidationErrors | null {
     if (this._valid) {
@@ -171,19 +175,21 @@ export class NumberStepperComponent implements AfterViewInit, OnDestroy, Control
   }
 
   onIncrease(): void {
-    if (this.max !== undefined && +this._value + +this.step > this.max) {
+    this.onTouch();
+    if (this.max && +(this._value ?? 0) + +this.step > this.max) {
       return;
     }
 
-    this.value = +this._value + +this.step;
+    this.value = +(this._value ?? 0) + +this.step;
   }
 
   onDecrease(): void {
-    if (this.min !== undefined && +this._value - +this.step < this.min) {
+    this.onTouch();
+    if (this.min && +(this._value ?? 0) - +this.step < this.min) {
       return;
     }
 
-    this.value = +this._value - +this.step;
+    this.value = +(this._value ?? 0) - +this.step;
   }
 
   private _getErrors(): ValidationErrors {
