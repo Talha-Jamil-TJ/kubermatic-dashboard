@@ -22,18 +22,21 @@ import {Component, OnChanges, OnInit, ViewChild} from '@angular/core';
 import {MatTableDataSource} from '@angular/material/table';
 import {MatPaginator} from '@angular/material/paginator';
 import {MatSort, Sort} from '@angular/material/sort';
+import {MatDialog} from '@angular/material/dialog';
 
-import {take, takeUntil, tap} from 'rxjs/operators';
-import {Subject} from 'rxjs';
-
-import {SettingsService} from '@core/services/settings';
-import {UserService} from '@core/services/user';
+import {take, takeUntil, tap, filter} from 'rxjs/operators';
+import {Subject, lastValueFrom} from 'rxjs';
 
 import {getNumberFromString} from '@shared/utils/common';
+import {QuotaDetails} from '@shared/entity/quota';
 import {Member} from '@shared/entity/member';
-import {Quota} from '@shared/entity/quota';
 
 import * as _ from 'lodash';
+
+import {QuotaService} from '@core/services/quota';
+import {UserService} from '@core/services/user';
+
+import {ProjectQuotaDialogComponent} from './project-quota-dialog/component';
 
 enum Column {
   projectId = 'projectId',
@@ -49,39 +52,40 @@ enum Column {
   styleUrls: ['style.scss'],
 })
 export class QuotasComponent implements OnInit, OnChanges {
-  user: Member;
-  quotas: Quota[] = [];
-  dataSource = new MatTableDataSource<Quota>(this.quotas);
-  displayedColumns: string[] = [Column.projectId, Column.CPU, Column.memory, Column.storage, Column.spacer];
-
-  isLoading = true;
-  Column = Column;
-
   @ViewChild(MatSort, {static: true}) sort: MatSort;
   @ViewChild(MatPaginator, {static: true}) paginator: MatPaginator;
 
+  user: Member;
+  quotas: QuotaDetails[] = [];
+  dataSource = new MatTableDataSource<QuotaDetails>(this.quotas);
+  displayedColumns: string[] = [Column.projectId, Column.CPU, Column.memory, Column.storage, Column.spacer];
+  isLoading = true;
+
+  Column = Column;
+
   private _unsubscribe = new Subject<void>();
 
-  constructor(private readonly _settingsService: SettingsService, private readonly _userService: UserService) {}
+  constructor(
+    private readonly _quotaService: QuotaService,
+    private readonly _userService: UserService,
+    private readonly _matDialog: MatDialog
+  ) {}
 
   ngOnInit(): void {
     this.dataSource.sort = this.sort;
     this.sort.active = Column.projectId;
     this.sort.direction = 'asc';
 
-    this._settingsService.quotas
+    this._quotaService.quotas
       .pipe(
         tap(() => (this.isLoading = false)),
+        filter(quotas => !_.isEqual(quotas.sort(), this.quotas.sort())),
         takeUntil(this._unsubscribe)
       )
       .subscribe({
         next: quotas => {
-          if (_.isEqual(quotas, this.quotas)) {
-            return;
-          }
-
           this.quotas = quotas;
-          this.setDataSource();
+          this.onSortChange();
         },
       });
 
@@ -108,7 +112,19 @@ export class QuotasComponent implements OnInit, OnChanges {
     this.dataSource.data = quotas;
   }
 
-  onSortChange({active, direction}: Sort): void {
+  async add(): Promise<void> {
+    await lastValueFrom(
+      this._matDialog
+        .open(ProjectQuotaDialogComponent, {
+          panelClass: 'km-quota-dialog',
+        })
+        .afterClosed()
+    );
+  }
+
+  onSortChange(sort: Sort = this.sort): void {
+    const {active, direction} = sort;
+
     if (!active || !direction) {
       this.setDataSource();
       return;

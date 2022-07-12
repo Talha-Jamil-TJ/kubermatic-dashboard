@@ -27,10 +27,10 @@ import {lastValueFrom} from 'rxjs';
 
 import {SharedModule} from '@shared/module';
 
-import {SettingsService} from '@core/services/settings';
+import {QuotaService} from '@core/services/quota';
 import {UserService} from '@core/services/user';
 
-import {SettingsMockService} from '@test/services/settings-mock';
+import {QuotaServiceMock} from '@test/services/quota-mock';
 import {UserMockService} from '@test/services/user-mock';
 
 import {QuotasComponent} from './component';
@@ -39,10 +39,10 @@ describe('QuotasComponent', () => {
   let fixture: ComponentFixture<QuotasComponent>;
   let component: QuotasComponent;
 
-  let settingService: SettingsService;
+  let quotaService: QuotaService;
   let userService: UserService;
 
-  const getQuotas = () => lastValueFrom(settingService['_getQuotas']());
+  const getQuotas = () => lastValueFrom(quotaService['_getQuotas']());
   const getUser = () => lastValueFrom(userService.currentUser);
   const getUserSetting = () => lastValueFrom(userService.currentUserSettings);
 
@@ -51,7 +51,7 @@ describe('QuotasComponent', () => {
       imports: [BrowserModule, NoopAnimationsModule, SharedModule, MatTableModule],
       declarations: [QuotasComponent],
       providers: [
-        {provide: SettingsService, useClass: SettingsMockService},
+        {provide: QuotaService, useClass: QuotaServiceMock},
         {provide: UserService, useClass: UserMockService},
       ],
     }).compileComponents();
@@ -61,7 +61,7 @@ describe('QuotasComponent', () => {
     fixture = TestBed.createComponent(QuotasComponent);
     component = fixture.componentInstance;
 
-    settingService = TestBed.inject(SettingsService);
+    quotaService = TestBed.inject(QuotaService);
     userService = TestBed.inject(UserService);
 
     fixture.detectChanges();
@@ -149,6 +149,16 @@ describe('QuotasComponent', () => {
     const element = fixture.debugElement.query(By.css('#quotas-paginator'));
 
     expect(element.nativeElement.hidden).toEqual(true);
+  });
+
+  it('should call add() when [Add Project Quota] button is clicked', () => {
+    const spy = jest.spyOn(component, 'add');
+
+    const element = fixture.debugElement.query(By.css('.km-add-quota-btn'));
+
+    element.nativeElement.click();
+
+    expect(spy).toHaveBeenCalled();
   });
 
   it('should set quotas when ngOnInit is called', async () => {

@@ -12,24 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export interface QuotaVariables {
-  cpu?: string;
-  memory?: string;
-  storage?: string;
+export class ChangeDetectorRefServiceMock {
+  detectChanges(): void {}
 }
-
-export interface QuotaStatus {
-  globalUsage: QuotaVariables | Record<string, never>;
-  localUsage: QuotaVariables | Record<string, never>;
-}
-
-export interface Quota {
-  quota: QuotaVariables;
-  subjectKind: string;
-  subjectName: string;
-}
-
-export type QuotaDetails = Quota & {
-  name: string;
-  status: QuotaStatus;
-};

@@ -12,24 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export interface QuotaVariables {
-  cpu?: string;
-  memory?: string;
-  storage?: string;
-}
+import {Validator, ValidationErrors, FormGroup} from '@angular/forms';
 
-export interface QuotaStatus {
-  globalUsage: QuotaVariables | Record<string, never>;
-  localUsage: QuotaVariables | Record<string, never>;
-}
+export class AtLeastOneValidator implements Validator {
+  validate({controls}: FormGroup): ValidationErrors | null {
+    if (!controls) {
+      return null;
+    }
 
-export interface Quota {
-  quota: QuotaVariables;
-  subjectKind: string;
-  subjectName: string;
-}
+    const hasValue = !!Object.values(controls).some(({value}) => !!value);
 
-export type QuotaDetails = Quota & {
-  name: string;
-  status: QuotaStatus;
-};
+    return hasValue ? null : this._error;
+  }
+
+  private get _error(): ValidationErrors {
+    return {
+      atLeastOneRequired: {
+        text: 'At least one value is required',
+      },
+    };
+  }
+}

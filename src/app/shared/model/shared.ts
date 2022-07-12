@@ -12,24 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export interface QuotaVariables {
-  cpu?: string;
-  memory?: string;
-  storage?: string;
-}
+import {FormGroup, FormControl} from '@angular/forms';
 
-export interface QuotaStatus {
-  globalUsage: QuotaVariables | Record<string, never>;
-  localUsage: QuotaVariables | Record<string, never>;
-}
-
-export interface Quota {
-  quota: QuotaVariables;
-  subjectKind: string;
-  subjectName: string;
-}
-
-export type QuotaDetails = Quota & {
-  name: string;
-  status: QuotaStatus;
+export type ControlsOf<T extends Record<string, any>> = {
+  [K in keyof T]: T[K] extends Record<string, any> ? FormGroup<ControlsOf<T[K]>> : FormControl<T[K]>;
 };
