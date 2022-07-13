@@ -67,7 +67,7 @@ END OF TERMS AND CONDITIONS
 
     <div fxLayout="column"
          fxLayoutAlign=" stretch">
-      <mat-form-field class="km-dropdown-with-suffix">
+      <mat-form-field class="km-dropdown-with-suffix" >
         <mat-label>Project</mat-label>
         <mat-select disableOptionCentering
                     class="km-select-ellipsis"
@@ -75,13 +75,14 @@ END OF TERMS AND CONDITIONS
                     required>
           <mat-option *ngFor="let project of projects"
                       [value]="project.id"> {{project.name}} </mat-option>
-          <mat-select-trigger fxLayout="row">
-            <div fxLayoutAlign="start">{{selectedProject?.name}}</div>
+          <mat-select-trigger fxLayout="row" >
+            <div fxLayoutAlign="start">{{selectedProject?.name || editQuota?.name}}</div>
 
             <div fxLayoutAlign="end"
                  class="km-select-trigger-button-wrapper">
               <button matSuffix
                       mat-icon-button
+                      [disabled]="!!editQuota"
                       (click)="resetSubjectNameControl()">
                 <i class="km-icon-mask km-icon-remove"></i>
               </button>

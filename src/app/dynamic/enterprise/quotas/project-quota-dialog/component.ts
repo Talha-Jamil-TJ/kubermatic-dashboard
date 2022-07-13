@@ -19,8 +19,8 @@
 // END OF TERMS AND CONDITIONS
 
 import {FormGroup, FormBuilder, Validators} from '@angular/forms';
-import {Component, OnInit, OnDestroy} from '@angular/core';
-import {MatDialogRef} from '@angular/material/dialog';
+import {Component, OnInit, OnDestroy, Inject} from '@angular/core';
+import {MatDialogRef, MAT_DIALOG_DATA} from '@angular/material/dialog';
 
 import {takeUntil, filter, tap} from 'rxjs/operators';
 import {Observable, Subject, of} from 'rxjs';
@@ -33,6 +33,7 @@ import {QuotaVariables, QuotaDetails, Quota} from '@shared/entity/quota';
 import {KmValidators} from '@shared/validators/validators';
 import {ControlsOf} from '@shared/model/shared';
 import {Project} from '@shared/entity/project';
+import * as _ from 'lodash';
 
 enum Error {
   Required = 'required',
@@ -59,6 +60,7 @@ export class ProjectQuotaDialogComponent implements OnInit, OnDestroy {
   constructor(
     private readonly _dialogRef: MatDialogRef<ProjectQuotaDialogComponent>,
     private readonly _notificationService: NotificationService,
+    @Inject(MAT_DIALOG_DATA) public editQuota: QuotaDetails,
     private readonly _projectService: ProjectService,
     private readonly _quotaService: QuotaService,
     private readonly _builder: FormBuilder
@@ -69,6 +71,7 @@ export class ProjectQuotaDialogComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this._setSelectedQuota();
     this._initForm();
     this._getProjects();
     this._getQuotas();
@@ -97,7 +100,7 @@ export class ProjectQuotaDialogComponent implements OnInit, OnDestroy {
     return (this.selectedQuota ? update$ : create$).pipe(
       tap({
         next: () => {
-          this._dialogRef.close(true);
+          this._dialogRef.close();
           this._notificationService.success(
             `${this.selectedQuota ? 'Updated' : 'Created'} project quota for ${formValue.subjectName}`
           );
@@ -107,10 +110,15 @@ export class ProjectQuotaDialogComponent implements OnInit, OnDestroy {
     );
   }
 
+  private _setSelectedQuota(): void {
+    this.selectedQuota = this.editQuota;
+  }
+
   private _getProjects(): void {
     this._projectService.allProjects.pipe(takeUntil(this._unsubscribe)).subscribe(projects => {
       this.projects = projects;
-      this.form.controls.subjectName.enable();
+
+      if (!this.editQuota) this.form.controls.subjectName.enable();
     });
   }
 
@@ -121,12 +129,20 @@ export class ProjectQuotaDialogComponent implements OnInit, OnDestroy {
   }
 
   private _initForm(): void {
+    const {
+      quota: {cpu, memory, storage},
+      subjectName,
+    } = this.editQuota ?? {
+      quota: {cpu: '', memory: '', storage: ''},
+      subjectName: '',
+    };
+
     this.form = this._builder.group<ControlsOf<Quota>>({
       quota: this._builder.group<ControlsOf<QuotaVariables>>(
         {
-          cpu: this._builder.control(''),
-          memory: this._builder.control(''),
-          storage: this._builder.control(''),
+          cpu: this._builder.control(cpu),
+          memory: this._builder.control(memory),
+          storage: this._builder.control(storage),
         },
         {validators: KmValidators.atLeastOneValidator}
       ),
@@ -135,7 +151,7 @@ export class ProjectQuotaDialogComponent implements OnInit, OnDestroy {
         nonNullable: true,
       }),
       subjectName: this._builder.control(
-        {value: '', disabled: true},
+        {value: subjectName, disabled: true},
         {validators: Validators.required, nonNullable: true}
       ),
     });

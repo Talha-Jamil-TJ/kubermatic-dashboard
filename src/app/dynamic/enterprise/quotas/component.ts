@@ -37,13 +37,15 @@ import {QuotaService} from '@core/services/quota';
 import {UserService} from '@core/services/user';
 
 import {ProjectQuotaDialogComponent} from './project-quota-dialog/component';
+import {ConfirmationDialogComponent, ConfirmationDialogConfig} from '@shared/components/confirmation-dialog/component';
+import {NotificationService} from '@core/services/notification';
 
 enum Column {
   projectId = 'projectId',
   CPU = 'CPU',
   memory = 'memory',
   storage = 'storage',
-  spacer = 'spacer',
+  actions = 'actions',
 }
 
 @Component({
@@ -58,7 +60,7 @@ export class QuotasComponent implements OnInit, OnChanges {
   user: Member;
   quotas: QuotaDetails[] = [];
   dataSource = new MatTableDataSource<QuotaDetails>(this.quotas);
-  displayedColumns: string[] = [Column.projectId, Column.CPU, Column.memory, Column.storage, Column.spacer];
+  displayedColumns: string[] = [Column.projectId, Column.CPU, Column.memory, Column.storage, Column.actions];
   isLoading = true;
 
   Column = Column;
@@ -66,6 +68,7 @@ export class QuotasComponent implements OnInit, OnChanges {
   private _unsubscribe = new Subject<void>();
 
   constructor(
+    private readonly _notificationService: NotificationService,
     private readonly _quotaService: QuotaService,
     private readonly _userService: UserService,
     private readonly _matDialog: MatDialog
@@ -115,11 +118,43 @@ export class QuotasComponent implements OnInit, OnChanges {
   async add(): Promise<void> {
     await lastValueFrom(
       this._matDialog
-        .open(ProjectQuotaDialogComponent, {
+        .open<ProjectQuotaDialogComponent, never, never>(ProjectQuotaDialogComponent, {
           panelClass: 'km-quota-dialog',
         })
         .afterClosed()
     );
+  }
+
+  async edit(quota: QuotaDetails): Promise<void> {
+    await lastValueFrom(
+      this._matDialog
+        .open<ProjectQuotaDialogComponent, QuotaDetails, never>(ProjectQuotaDialogComponent, {
+          panelClass: 'km-quota-dialog',
+          data: quota,
+        })
+        .afterClosed()
+    );
+  }
+
+  async delete({name}: QuotaDetails): Promise<void> {
+    const isConfirmed = await lastValueFrom(
+      this._matDialog
+        .open<ConfirmationDialogComponent, ConfirmationDialogConfig, boolean>(ConfirmationDialogComponent, {
+          data: {
+            title: 'Delete Quota',
+            message: `Delete quota for ${name}?`,
+            confirmLabel: 'Delete',
+          },
+        })
+        .afterClosed()
+    );
+
+    if (!isConfirmed) return;
+
+    await lastValueFrom(this._quotaService.deleteQuota(name));
+
+    this._notificationService.success(`Deleting the ${name} datacenter`);
+    this._quotaService.refreshQuotas();
   }
 
   onSortChange(sort: Sort = this.sort): void {
