@@ -97,7 +97,7 @@
   "devDependencies": {
     "@angular-devkit/build-angular": "14.2.6",
     "@angular/cli": "14.2.6",
-    "@angular/compiler-cli": "14.2.6",
+    "@angular/compiler-cli": "14.2.8",
     "@jest/globals": "29.1.2",
     "@types/jest": "29.1.2",
     "@types/js-yaml": "4.0.5",
